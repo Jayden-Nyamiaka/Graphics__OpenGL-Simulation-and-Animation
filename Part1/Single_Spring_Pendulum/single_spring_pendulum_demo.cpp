@@ -215,48 +215,18 @@ void update_path()
     path_colors1.push_back(color1);
 }
 
+/* Applies the update rules derived from the Euler-Lagrangian equation */
 void update_pendulum()
 {
-    /******************************* TODO *******************************/
+    // Explicitly updates the momentum of mass 1
+    m1.px += - dt * m1.k * (m1.x - m1.rl);
+    m1.py += dt * (m1.m * g - m1.k * (m1.y - m1.rl));
 
-    /* Your task is to write some lines of code to update:
-     * 
-     *     m1.x
-     *     m1.y
-     *     m1.px
-     *     m1.py
-     *
-     * (not necessarily in that order)
-     * To start, you should write the continuous Lagrangian for the spring
-     * pendulum system. Then, you should write the discrete analog. From
-     * there, use the discrete Euler-Lagrangian equations to solve for
-     * the correct update rules.
-     *
-     * The variables that you'll need (in addition to the above-listed
-     * ones) are:
-     *
-     *     dt
-     *     m1.m
-     *     m1.k
-     *     m1.rl
-     *     g
-     * 
-     */
+    // Uses updated (k + 1) momentum to implicity update the position of mass 1
+    m1.x += (dt / m1.m) * m1.px;
+    m1.y += (dt / m1.m) * m1.py;
 
-
-
-
-
-
-
-
-
-
-
-
-
-    /****************************** END TODO ****************************/
-
+    // Updates the time
     t += dt;
 }
 
