@@ -219,8 +219,8 @@ void update_path()
 void update_pendulum()
 {
     // Explicitly updates the momentum of mass 1
-    m1.px += - dt * m1.k * (m1.x - m1.rl);
-    m1.py += dt * (m1.m * g - m1.k * (m1.y - m1.rl));
+    m1.px += - dt * m1.k * m1.x * (1.0 - m1.rl / sqrt(m1.x*m1.x + m1.y*m1.y) );
+    m1.py += - dt * m1.k * m1.y * (1.0 - m1.rl / sqrt(m1.x*m1.x + m1.y*m1.y) ) + dt * m1.m * g;
 
     // Uses updated (k + 1) momentum to implicity update the position of mass 1
     m1.x += (dt / m1.m) * m1.px;
