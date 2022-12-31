@@ -15,7 +15,7 @@
 # above the directory that contains this Makefile.
 ###############################################################################
 CC = g++
-FLAGS = -g -std=c++11
+FLAGS = -g -std=c++11 -w
 
 INCLUDE = -I/usr/X11R6/include -I/usr/include/GL -I/usr/include -I../
 LIBDIR = -L/usr/X11R6/lib -L/usr/local/lib

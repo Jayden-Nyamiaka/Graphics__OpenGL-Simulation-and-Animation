@@ -332,52 +332,15 @@ void display(void)
         if(dragging && draggedPoint == i)
             continue;
         
-        /******************************* TODO *******************************/
+        // Explicitly updates the velocity
+        vertices[i].vx += (tstep / vertices[i].mass) * vertices[i].fx;
+        vertices[i].vy += (tstep / vertices[i].mass) * vertices[i].fy;
 
-        /* Your task is to write some lines of code to correctly update:
-         *
-         *     vertices[i].x
-         *     vertices[i].y
-         *     vertices[i].vx
-         *     vertices[i].vy
-         *
-         * (not necessarily in that order)
-         * You are to update these variables knowing that this system follows
-         * the standard Lagrangian:
-         *
-         *     L = 1/2 * m * ( v_x^2 + v_y^2 ) - U( x, y )
-         *
-         * Remember that:
-         *
-         *     d/dx U( x, y ) = -f_x = -vertices[i].fx
-         *     d/dy U( x, y ) = -f_y = -vertices[i].fy
-         *
-         * where vertices[i].fx and vertices[i].fy are already computed for you via
-         * the updateforces() function.
-         *
-         * Besides the above mentioned variables, you'll find the variable, tstep,
-         * necessary.
-         *
-         * As always, write the discrete analog to the Lagrangian, L, above, and
-         * use the discrete Euler-Lagrangian equations to solve for the update rules.
-         * HINT: this is not that hard; you might even see this as a trick question...
-         */
+        // Uses the updated (k + 1) velocity to implicity update the position
+        vertices[i].x += tstep * vertices[i].vx;
+        vertices[i].y += tstep * vertices[i].vy;
 
-
-
-
-
-
-
-
-
-
-
-
-         
-
-        /****************************** END TODO ****************************/
-        
+        // Updates the kinetic energy using our computed velocity
         ke += 1.0 / 2.0 * ( vertices[i].vx * vertices[i].vx
                             + vertices[i].vy * vertices[i].vy );
     }

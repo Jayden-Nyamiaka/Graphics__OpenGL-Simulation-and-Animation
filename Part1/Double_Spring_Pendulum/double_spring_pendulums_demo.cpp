@@ -206,64 +206,24 @@ void update_path()
 
 void update_pendulums()
 {
-    /******************************* TODO *******************************/
+    // Computes stiff factors which are reused in momentum computations
+    float stiff_factor_1 = (sqrt(m1.x*m1.x + m1.y*m1.y) - m1.rl) / sqrt(m1.x*m1.x + m1.y*m1.y);
+    float stiff_factor_2 = (sqrt((m2.x-m1.x)*(m2.x-m1.x) + (m2.y-m1.y)*(m2.y-m1.y)) - m2.rl)
+                                / sqrt((m2.x-m1.x)*(m2.x-m1.x) + (m2.y-m1.y)*(m2.y-m1.y));
 
-    /* Your task is to write some lines of code to update:
-     * 
-     *     m1.x
-     *     m1.y
-     *     m1.px
-     *     m1.py
-     *
-     *     m2.x
-     *     m2.y
-     *     m2.px
-     *     m2.py
-     *
-     * (not necessarily in that order)
-     * To start, you should write the continuous Lagrangian for the spring
-     * pendulum system. Then, you should write the discrete analog. From
-     * there, use the discrete Euler-Lagrangian equations to solve for
-     * the correct update rules.
-     *
-     * The variables that you'll need (in addition to the above-listed
-     * ones) are:
-     *
-     *     dt
-     *     m1.m
-     *     m1.k
-     *     m1.rl
-     *     m2.m
-     *     m2.k
-     *     m2.rl
-     *     g
-     * 
-     */
-
+    // Explicitly updates the momentums
+    m1.px += dt * (-m1.k * m1.x * stiff_factor_1 + m2.k * (m2.x - m1.x) * stiff_factor_2);
+    m1.py += dt * (-m1.k * m1.y * stiff_factor_1 + m2.k * (m2.y - m1.y) * stiff_factor_2 + m1.m * g);
+    m2.px += dt * -m2.k * (m2.x - m1.x) * stiff_factor_2;
+    m2.py += dt * (-m2.k * (m2.y - m1.y) * stiff_factor_2 + m2.m * g);
     
+    // Uses updated (k + 1) momentums to implicity update the positions
+    m1.x += (dt / m1.m) * m1.px;
+    m1.y += (dt / m1.m) * m1.py;
+    m2.x += (dt / m2.m) * m2.px;
+    m2.y += (dt / m2.m) * m2.py;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    /****************************** END TODO ****************************/
-
+    // Updates the time
     t += dt;
 }
 
