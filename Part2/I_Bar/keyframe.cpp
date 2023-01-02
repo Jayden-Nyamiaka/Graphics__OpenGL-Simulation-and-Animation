@@ -17,7 +17,6 @@
 #include <Eigen/Dense>
 using Eigen::Vector3f;
 using Eigen::Vector4f;
-using Eigen::Matrix4f;
 
 using namespace std;
 
@@ -71,14 +70,6 @@ float near_param = 1.0f,
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Frame parameters */
-
-// Basis Matrix used with splines to interpolate components 
-Matrix4f mat_B;
-B << 0, 2, 0, 0,
-     -1, 0, 1, 0,
-     2, -5, 4, -1,
-     -1, 3, -3, 1;
-B *= 0.5;
 
 // Parameters read in from the input .script file
 int frame_count;
@@ -447,14 +438,22 @@ void reshape(int width, int height)
 
 
 // Uses Catmull-Rom Spline to interpolate a component given values for p-1, p, p+1, & p+2
-void interpolateComponent(Vector4f vec_u, float comp_m1, float comp, float comp_a1, float comp_a2) 
+float interpolateComponent(Vector4f vec_u, float comp_m1, float comp, float comp_a1, float comp_a2) 
 {
+    // Basis Matrix used with splines to interpolate components 
+    Eigen::Matrix4f mat_B;
+    mat_B << 0, 2, 0, 0,
+        -1, 0, 1, 0,
+        2, -5, 4, -1,
+        -1, 3, -3, 1;
+    mat_B *= 0.5;
+
     // Calculates vector p given the componenets for p-1, p, p+1, & p+2
     Vector4f vec_p;
-    vec_p << comp_m1, comp, comp_a1
+    vec_p << comp_m1, comp, comp_a1, comp_a2;
     
-    // returns the resulting interpolated component f(u) = u B p
-    return vec_u * mat_B * vec_p;
+    // returns the resulting interpolated component f(u) = u dot B * p
+    return vec_u.dot(mat_B * vec_p)
 }
 
 
