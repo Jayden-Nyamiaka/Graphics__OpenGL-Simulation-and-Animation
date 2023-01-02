@@ -16,6 +16,7 @@
 /* Eigen Library included for ArcBall implementation */
 #include <Eigen/Dense>
 using Eigen::Vector3f;
+using Eigen::Vector4f;
 using Eigen::Matrix4f;
 
 using namespace std;
@@ -69,10 +70,27 @@ float near_param = 1.0f,
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Frame parameters read in from the input .script file */
-int frame_num;
+/* Frame parameters */
+
+// Basis Matrix used with splines to interpolate components 
+Matrix4f mat_B;
+B << 0, 2, 0, 0,
+     -1, 0, 1, 0,
+     2, -5, 4, -1,
+     -1, 3, -3, 1;
+B *= 0.5;
+
+// Parameters read in from the input .script file
 int frame_count;
 vector<Frame*> frames;
+
+// Parameters that track the current state of the frames and which is being displayed
+int frame_num; // the # of the frame that we are currently displaying
+int frame_idx; // the idx of the frame in our frames vector that we are displaying or using to interpolate as p_i 
+Frame currFrame;
+
+// Index parameters that control interpolation between key frames
+int idx_pm1, idx_pa1, idx_pa2; // the frame_idx works as idx_p / p_i
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -204,6 +222,11 @@ void init(int &argc, char* argv[])
     // Extracts all information from script file entered in command line
     parseScriptFile(script_file);
 
+    // Sets the current frame to frame 0
+    frame_num = 0;
+    frame_idx = 0;
+    currFrame = *(frames[frame_idx]);
+    
     // Declares quadratic needed to draw I-bar later
     quadratic = gluNewQuadric();
 
@@ -288,19 +311,50 @@ void init(int &argc, char* argv[])
      * for details.
      */
     glMatrixMode(GL_MODELVIEW);
-    
-    /* The next line calls our function that tells OpenGL to initialize some
-     * lights to represent our Point Light structs. Further details will be
-     * given in the function itself.
-     *
-     * The reason we have this procedure as a separate function is to make
-     * the code more organized.
-     */
-    //init_lights();
 }
 
 
-void drawIBar()
+// Applies trnasformation for the current frame
+void transformIBar(void)
+{
+    // Applies the translation first
+    glTranslatef(currFrame.translation[0], 
+                 currFrame.translation[1], 
+                 currFrame.translation[2]);
+
+    // Then applies the rotation
+    Quarternion q = currFrame.rotation;
+    GLfloat rot[16];
+
+    rot[0] = 1.0f - 2.0f * q.im[1] * q.im[1] - 2.0f * q.im[2] * q.im[2];
+    rot[1] = 2.0f * (q.im[0] * q.im[1] - q.im[2] * q.real);
+    rot[2] = 2.0f * (q.im[0] * q.im[2] + q.im[1] * q.real);
+    rot[3] = 0.0f;
+
+    rot[4] = 2.0f * (q.im[0] * q.im[1] + q.im[2] * q.real);
+    rot[5] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[2] * q.im[2];
+    rot[6] = 2.0f * (q.im[1] * q.im[2] - q.im[0] * q.real);
+    rot[7] = 0.0f;
+
+    rot[8] = 2.0f * (q.im[0] * q.im[2] - q.im[1] * q.real);
+    rot[9] = 2.0f * (q.im[1] * q.im[2] + q.im[0] * q.real);
+    rot[10] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[1] * q.im[1];
+    rot[11] = 0.0f;
+    
+    rot[12] = 0.0f;
+    rot[13] = 0.0f;
+    rot[14] = 0.0f;
+    rot[15] = 1.0f;
+
+    glMultMatrixf(rot);
+
+    // Finally applies the scaling
+    glScalef(currFrame.scaling[0], 
+             currFrame.scaling[1], 
+             currFrame.scaling[2]);
+}
+
+void drawIBar(void)
 {   
     glPushMatrix();
     glColor3f(0, 0, 1);
@@ -350,15 +404,8 @@ void display(void)
     // Translates by our camera's position
     glTranslatef(-cam_position[0], -cam_position[1], -cam_position[2]);
 
-
-    /* Our next step is to set up all the lights in their specified positions.
-     * Our helper function, 'set_lights' does this for us. See the function
-     * for more details.
-     *
-     * The reason we have this procedure as a separate function is to make
-     * the code more organized.
-     */
-    //set_lights();
+    // Applies the set I-bar transformation to our ModelView Matrix
+    transformIBar();
 
     // Draws the I-bar where and how we specified
     drawIBar();
@@ -399,22 +446,133 @@ void reshape(int width, int height)
 }
 
 
-// TODO: Later once things renders
-void transform_next_frame(void)
+// Uses Catmull-Rom Spline to interpolate a component given values for p-1, p, p+1, & p+2
+void interpolateComponent(Vector4f vec_u, float comp_m1, float comp, float comp_a1, float comp_a2) 
 {
-    if (frame_num == frame_count - 1) {
-        // set frame to 0 frame
-        return;
+    // Calculates vector p given the componenets for p-1, p, p+1, & p+2
+    Vector4f vec_p;
+    vec_p << comp_m1, comp, comp_a1
+    
+    // returns the resulting interpolated component f(u) = u B p
+    return vec_u * mat_B * vec_p;
+}
+
+
+void interpolate(void)
+{
+    // Gets the frames indicated by frame indices for p-1, p, p+1, & p+2
+    Frame *fm1 = frames[idx_pm1];
+    Frame *f = frames[frame_idx];
+    Frame *fa1 = frames[idx_pa1];
+    Frame *fa2 = frames[idx_pa2];
+
+    // Calculates vector u as the input to the Catmull-Rom Spline function f(u)
+    float u = (frame_num - f->number) / (fa1->number - f->number);
+    Vector4f vec_u;
+    vec_u << 1, u, u*u, u*u*u;
+
+    // Sets the frame number
+    currFrame.number = frame_num;
+
+    // Interpolates all components
+
+    // Translation
+    currFrame.translation[0] = interpolateComponent(vec_u, fm1->translation[0],
+                                                           f->translation[0],
+                                                           fa1->translation[0],
+                                                           fa2->translation[0]);
+    currFrame.translation[1] = interpolateComponent(vec_u, fm1->translation[1],
+                                                           f->translation[1],
+                                                           fa1->translation[1],
+                                                           fa2->translation[1]);
+    currFrame.translation[2] = interpolateComponent(vec_u, fm1->translation[2],
+                                                           f->translation[2],
+                                                           fa1->translation[2],
+                                                           fa2->translation[2]);
+
+    // Scaling
+    currFrame.scaling[0] = interpolateComponent(vec_u, fm1->scaling[0],
+                                                       f->scaling[0],
+                                                       fa1->scaling[0],
+                                                       fa2->scaling[0]);
+    currFrame.scaling[1] = interpolateComponent(vec_u, fm1->scaling[1],
+                                                       f->scaling[1],
+                                                       fa1->scaling[1],
+                                                       fa2->scaling[1]);
+    currFrame.scaling[2] = interpolateComponent(vec_u, fm1->scaling[2],
+                                                       f->scaling[2],
+                                                       fa1->scaling[2],
+                                                       fa2->scaling[2]);
+    
+    // Rotation
+    Vector3f rotIm;
+    rotIm[0] = interpolateComponent(vec_u, fm1->rotation.im[0],
+                                           f->rotation.im[0],
+                                           fa1->rotation.im[0],
+                                           fa2->rotation.im[0]);
+    rotIm[1] = interpolateComponent(vec_u, fm1->rotation.im[1],
+                                           f->rotation.im[1],
+                                           fa1->rotation.im[1],
+                                           fa2->rotation.im[1]);
+    rotIm[2] = interpolateComponent(vec_u, fm1->rotation.im[2],
+                                           f->rotation.im[2],
+                                           fa1->rotation.im[2],
+                                           fa2->rotation.im[2]);
+    rotIm.normalize();
+    currFrame.rotation.im[0] = rotIm[0];
+    currFrame.rotation.im[1] = rotIm[1];
+    currFrame.rotation.im[2] = rotIm[2];
+
+}
+
+
+int prev_frame_idx(int idx) 
+{
+    return (idx == 0) ? frames.size() - 1 : idx - 1;
+}
+
+
+int next_frame_idx(int idx) 
+{
+    return (idx + 1 == frames.size()) ? 0 : idx + 1;
+}
+
+
+void next_frame(void)
+{
+    // Increments our frame number
+    frame_num++;
+
+    // If we've reached the last frame of our animation, go back to the first frame
+    if (frame_num == frame_count) {
+        frame_num = 0;
+        frame_idx = 0;
+        currFrame = *(frames[frame_idx]);
     }
 
-    // else just set next frame
+    // If the next frame is a keyframe, set our current frame to that keyframe
+    else if (frame_num == frames[frame_idx + 1]->number) {
+        frame_idx++;
+        currFrame = *(frames[frame_idx]);
+    }
+
+    // Else the frame is not a keyframe and must be interpolated
+    else {
+        // if the prev frame displayed is a keyframe, set new interpolation indices
+        if (frame_num - 1 == frames[frame_idx]->number) {
+            idx_pm1 = prev_frame_idx(frame_idx);
+            idx_pa1 = next_frame_idx(frame_idx);
+            idx_pa2 = next_frame_idx(idx_pa1);
+        }
+        interpolate();
+    }
 }
 
 
 // Display the next frame if any key is pressed
 void key_pressed(unsigned char key, int x, int y)
 {
-    transform_next_frame();
+    next_frame();
 }
 
 
