@@ -18,6 +18,7 @@
 using Eigen::Vector3f;
 using Eigen::Matrix4f;
 
+using namespace std;
 
 struct Quarternion
 {
@@ -33,14 +34,14 @@ struct Frame
     Quarternion rotation;
 };
 
-Quarternion getIdentityQuarternion(void) {
+/*Quarternion getIdentityQuarternion(void) {
     Quarternion q;
     q.real = 1.0f;
     q.im[0] = 0.0f;
     q.im[1] = 0.0f;
     q.im[2] = 0.0f;
     return q;
-}
+}*/
 
 /* This is a code snippet for drawing the "I-bar". The 'quadratic' object can be made
  * into a global variable in your program if you want. Line 13, where 'quadratic' gets
@@ -57,11 +58,8 @@ GLUquadricObj *quadratic;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Hardcoded camera and frustum parameters */
-
 float cam_position[3] = {0.0f, 0.0f, 40.0f};
-
 // No camera rotation - no orientation axis or angle
-
 float near_param = 1.0f,
     far_param = 60.0f,
     left_param = -1.0f,
@@ -72,7 +70,6 @@ float near_param = 1.0f,
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Frame parameters read in from the input .script file */
-
 int frame_num;
 int frame_count;
 vector<Frame*> frames;
@@ -88,59 +85,33 @@ int quadSlices = 4;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void drawIBar()
-{   
-    glPushMatrix();
-    glColor3f(0, 0, 1);
-    glTranslatef(0, cyHeight, 0);
-    glRotatef(90, 1, 0, 0);
-    gluCylinder(quadratic, cyRad, cyRad, 2.0 * cyHeight, quadSlices, quadStacks);
-    glPopMatrix();
-    
-    glPushMatrix();
-    glColor3f(0, 1, 1);
-    glTranslatef(0, cyHeight, 0);
-    glRotatef(90, 0, 1, 0);
-    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
-    glPopMatrix();
-    
-    glPushMatrix();
-    glColor3f(1, 0, 1);
-    glTranslatef(0, cyHeight, 0);
-    glRotatef(-90, 0, 1, 0);
-    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
-    glPopMatrix();
-    
-    glPushMatrix();
-    glColor3f(1, 1, 0);
-    glTranslatef(0, -cyHeight, 0);
-    glRotatef(-90, 0, 1, 0);
-    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
-    glPopMatrix();
-    
-    glPushMatrix();
-    glColor3f(0, 1, 0);
-    glTranslatef(0, -cyHeight, 0);
-    glRotatef(90, 0, 1, 0);
-    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
-    glPopMatrix();
+void usage(string filename) {
+    cerr << "usage: " << filename << " input_file.script xres yres\n\t"
+            "xres, yres (screen resolution) must be positive integers\n";
+    exit(1);
 }
 
+
+// Tokenizes a string by spaces returning the tokenized elements in a vector
 void splitBySpace(string s, vector<string> &split)
 {
     stringstream stream(s);
 
     string buffer;
     while(getline(stream, buffer, ' ')) {
-        split.push_back(buffer);
+        if (!buffer.empty()) {
+            split.push_back(buffer);
+        }
     }
 }
+
 
 // Converts a given angle in degrees to radians
 float deg2rad(float angle)
 {
     return angle * M_PI / 180.0;
 }
+
 
 void parseScriptFile(string scriptfile)
 {
@@ -152,7 +123,7 @@ void parseScriptFile(string scriptfile)
     string buffer;
     ifstream script;
     script.open(scriptfile.c_str(), ifstream::in);
-    if (scriptfile.fail()) {
+    if (script.fail()) {
         throw invalid_argument("Could not read input script file '" + scriptfile + "'.");
     }
 
@@ -184,13 +155,13 @@ void parseScriptFile(string scriptfile)
             float rot_x = stof(line[1]);
             float rot_y = stof(line[2]);
             float rot_z = stof(line[3]);
-            float theta = deg2rad(stof(line[4]) );
+            float theta = deg2rad( stof(line[4]) );
             double sinHalfTheta = sin(0.5 * theta);
 
             frame->rotation.real = cos(0.5 * theta);
-            frame->rotation.im.x = rot_x * sinHalfTheta;
-            frame->rotation.im.x = rot_y * sinHalfTheta;
-            frame->rotation.im.x = rot_z * sinHalfTheta;
+            frame->rotation.im[0] = rot_x * sinHalfTheta;
+            frame->rotation.im[1] = rot_y * sinHalfTheta;
+            frame->rotation.im[2] = rot_z * sinHalfTheta;
 
             frames.push_back(frame);
         }
@@ -198,7 +169,8 @@ void parseScriptFile(string scriptfile)
     script.close();
 }
 
-void init(int &argc, char* &argv[])
+
+void init(int &argc, char* argv[])
 {
     /* Checks that the user inputted the right parameters into the command line
      * and stores xres, yres, and filename to their respective fields
@@ -327,6 +299,46 @@ void init(int &argc, char* &argv[])
     //init_lights();
 }
 
+
+void drawIBar()
+{   
+    glPushMatrix();
+    glColor3f(0, 0, 1);
+    glTranslatef(0, cyHeight, 0);
+    glRotatef(90, 1, 0, 0);
+    gluCylinder(quadratic, cyRad, cyRad, 2.0 * cyHeight, quadSlices, quadStacks);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glColor3f(0, 1, 1);
+    glTranslatef(0, cyHeight, 0);
+    glRotatef(90, 0, 1, 0);
+    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glColor3f(1, 0, 1);
+    glTranslatef(0, cyHeight, 0);
+    glRotatef(-90, 0, 1, 0);
+    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glColor3f(1, 1, 0);
+    glTranslatef(0, -cyHeight, 0);
+    glRotatef(-90, 0, 1, 0);
+    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glColor3f(0, 1, 0);
+    glTranslatef(0, -cyHeight, 0);
+    glRotatef(90, 0, 1, 0);
+    gluCylinder(quadratic, cyRad, cyRad, cyHeight, quadSlices, quadStacks);
+    glPopMatrix();
+}
+
+
 void display(void)
 {
     // Clears our Color and Depth Buffers
@@ -348,7 +360,7 @@ void display(void)
      */
     //set_lights();
 
-    // Draw the I-bar where and how we specified
+    // Draws the I-bar where and how we specified
     drawIBar();
     
     // Swaps our double buffer
@@ -386,6 +398,7 @@ void reshape(int width, int height)
     glutPostRedisplay();
 }
 
+
 // TODO: Later once things renders
 void transform_next_frame(void)
 {
@@ -397,11 +410,13 @@ void transform_next_frame(void)
     // else just set next frame
 }
 
+
 // Display the next frame if any key is pressed
 void key_pressed(unsigned char key, int x, int y)
 {
     transform_next_frame();
 }
+
 
 void destruct() {
     for (int i = 0; i < frames.size(); i++) {
@@ -409,11 +424,6 @@ void destruct() {
     }
 }
 
-void usage(string filename) {
-    cerr << "usage: " << filename << " input_file.script xres yres\n\t"
-            "xres, yres (screen resolution) must be positive integers\n";
-    exit(1);
-}
 
 int main(int argc, char* argv[])
 {
