@@ -40,14 +40,14 @@ struct Face
 struct Frame
 {
     int number;
-    vector<Point *> points;
+    vector<Point *> *points;
 };
 
 
 // Vectors used to store keyframes, interpolated frames, and the faces 
-vector<Frame *> keyframes;
-vector<Frame *> interpolated_frames;
-vector<Face *> faces;
+vector<Frame *> *keyframes;
+vector<Frame *> *interpolated_frames;
+vector<Face *> *faces;
 
 
 // Prints usage message if user calls the program with incorrect arguments
@@ -74,10 +74,15 @@ void splitBySpace(string s, vector<string> &split)
 // Reads in the keyframes 
 void read_keyframes(void) 
 {
+    // Heap allocates memory for keyframes and faces vectors
+    keyframes = new vector<Frame *>;
+    faces = new vector<Face *>;
+
     // Mallocs a new frame for each key frame
     for (int idx = 0; idx < keyframe_count; idx++) {
         Frame *keyframe = (Frame*)malloc(sizeof(Frame));
         keyframe->number = stoi(keyframe_nums[idx]);
+        keyframe->points = new vector<Point *>;
 
         // Opens the input file for each keyframe
         string obj_file_path = in_directory + frame_name + keyframe_nums[idx] + ".obj";
@@ -103,7 +108,7 @@ void read_keyframes(void)
                 p->x = stof(line[1]);
                 p->y = stof(line[2]);
                 p->z = stof(line[3]);
-                keyframe->points.push_back(p);
+                keyframe->points->push_back(p);
             }
 
             // Reads in faces but only on the first loop iteration
@@ -120,12 +125,12 @@ void read_keyframes(void)
                 f->p1 = stoi(line[1]);
                 f->p2 = stoi(line[2]);
                 f->p3 = stoi(line[3]);
-                faces.push_back(f);
+                faces->push_back(f);
             }
         }
 
         // Adds the keyframe to our vector and closes the file input once the frame is read in
-        keyframes.push_back(keyframe);
+        keyframes->push_back(keyframe);
         obj_file.close();
     }
 }
@@ -154,15 +159,16 @@ float interpolate_component(Vector4f vec_u, float comp_m1, float comp, float com
 // Interpolates the frames between 2 keyframes indicated by idx_p and idx_pa1
 void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
     // Gets the keyframes for p-1, p, p+1, & p+2
-    Frame *fm1 = keyframes[idx_pm1];
-    Frame *f = keyframes[idx_p];
-    Frame *fa1 = keyframes[idx_pa1];
-    Frame *fa2 = keyframes[idx_pa2];
+    Frame *fm1 = keyframes->at(idx_pm1);
+    Frame *f = keyframes->at(idx_p);
+    Frame *fa1 = keyframes->at(idx_pa1);
+    Frame *fa2 = keyframes->at(idx_pa2);
 
     // Interpolates a frame for every # between the idx_p and idx_pa1 keyframes
     for (int frame_num = f->number + 1; frame_num < fa1->number; frame_num++) {
         Frame* f = (Frame *)malloc(sizeof(Frame));
         f->number = frame_num;
+        f->points = new vector<Point *>;
 
         // Calculates vector u as the input to the Catmull-Rom Spline function f(u)
         float u = (frame_num - f->number) * 1.0 / (fa1->number - f->number);
@@ -188,7 +194,7 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
                                               fa1->points[point_idx]->z,
                                               fa2->points[point_idx]->z);
 
-            f->points.push_back(p);
+            f->points->push_back(p);
         }
     }
 }
@@ -204,13 +210,15 @@ int prev_keyframe_idx(int idx)
 // Gets the next frame index with a max of keyframes.size() - 1
 int next_keyframe_idx(int idx) 
 {
-    return (idx + 1 == keyframes.size()) ? idx : idx + 1;
+    return (idx + 1 == keyframes->size()) ? idx : idx + 1;
 }
 
 
 // Interpolates all the frames
 void interpolate_frames(void)
 {
+    interpolated_frames = new vector<Frame *>;
+
     for (int idx = 0; idx < keyframe_count; idx++) {
         int idx_pm1 = prev_keyframe_idx(idx);
         int idx_pa1 = next_keyframe_idx(idx);
@@ -232,9 +240,9 @@ string intTo2DigitString(int num) {
 // Output all the interpolated frames
 void output_interpolated_frames(void) 
 {
-    for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
+    for (int frame_idx = 0; frame_idx < interpolated_frames->size(); frame_idx++) {
         // Gets the interpolated frame for every interpolated frame
-        Frame *frame = interpolated_frames[frame_idx];
+        Frame *frame = interpolated_frames->at(frame_idx);
         string obj_file_path = out_directory + frame_name + intTo2DigitString(frame->number) + ".obj";
 
         // Creates a file in the out directory for the frame
@@ -245,14 +253,14 @@ void output_interpolated_frames(void)
         } 
 
         // Writes all the interpolated points
-        for (int point_idx = 0; point_idx < frame->points.size(); point_idx++) {
-            Point *p = frame->points[point_idx];
+        for (int point_idx = 0; point_idx < frame->points->size(); point_idx++) {
+            Point *p = frame->points->at(point_idx);
             obj_file << "v " << p->x << " " << p->y << " " << p->z << endl;
         }
         
         // Writes all the faces
-        for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
-            Face *f = faces[face_idx];
+        for (int face_idx = 0; face_idx < faces->size(); face_idx++) {
+            Face *f = faces->at(face_idx);
             obj_file << "f " << f->p1 << " " << f->p2 << " " << f->p3 << endl;
         }
 
@@ -265,26 +273,31 @@ void output_interpolated_frames(void)
 void destruct() {
     // Frees each keyframe along with all of its points
     for (int frame_idx = 0; frame_idx < keyframe_count; frame_idx++) {
-        vector<Point *> points = keyframes[frame_idx]->points;
-        for (int point_idx = 0; point_idx < points.size(); point_idx++) {
-            free(points[point_idx]);
+        vector<Point *> *points = keyframes->at(frame_idx)->points;
+        for (int point_idx = 0; point_idx < points->size(); point_idx++) {
+            free(points->at(point_idx));
         }
-        free(keyframes[frame_idx]);
+        free(keyframes->at(frame_idx)->points);
+        free(keyframes->at(frame_idx));
     }
+    free(keyframes);
 
     // Frees each interpolated frame along with all of its points
-    for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
-        vector<Point *> points = interpolated_frames[frame_idx]->points;
-        for (int point_idx = 0; point_idx < points.size(); point_idx++) {
-            free(points[point_idx]);
+    for (int frame_idx = 0; frame_idx < interpolated_frames->size(); frame_idx++) {
+        vector<Point *> *points = interpolated_frames->at(frame_idx)->points;
+        for (int point_idx = 0; point_idx < points->size(); point_idx++) {
+            free(points->at(point_idx));
         }
-        free(keyframes[frame_idx]);
+        free(interpolated_frames->at(frame_idx)->points);
+        free(interpolated_frames->at(frame_idx));
     }
+    free(interpolated_frames);
 
     // Frees every face
     for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
         free(faces[face_idx]);
     }
+    free(faces);
 }
 
 
