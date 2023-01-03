@@ -40,14 +40,14 @@ struct Face
 struct Frame
 {
     int number;
-    vector<Point> points;
+    vector<Point *> points;
 };
 
 
 // Vectors used to store keyframes, interpolated frames, and the faces 
 vector<Frame *> keyframes;
 vector<Frame *> interpolated_frames;
-vector<Face> faces;
+vector<Face *> faces;
 
 
 // Prints usage message if user calls the program with incorrect arguments
@@ -99,10 +99,10 @@ void read_keyframes(void)
             // Reads in vertices
             if (line[0][0] == 'v') {
                 cerr << buffer << endl;
-                Point p;
-                p.x = stof(line[1]);
-                p.y = stof(line[2]);
-                p.z = stof(line[3]);
+                Point *p = (Point *)malloc(sizeof(Point));
+                p->x = stof(line[1]);
+                p->y = stof(line[2]);
+                p->z = stof(line[3]);
                 keyframe->points.push_back(p);
             }
 
@@ -116,10 +116,10 @@ void read_keyframes(void)
 
                 cerr << buffer << endl;
 
-                Face f;
-                f.p1 = stoi(line[1]);
-                f.p2 = stoi(line[2]);
-                f.p3 = stoi(line[3]);
+                Face *f = (Face *)malloc(sizeof(Face));
+                f->p1 = stoi(line[1]);
+                f->p2 = stoi(line[2]);
+                f->p3 = stoi(line[3]);
                 faces.push_back(f);
             }
         }
@@ -171,22 +171,22 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
 
         // Interpolates every point for the frame
         for (int point_idx = 0; point_idx < f->points.size(); point_idx++) {
-            Point p;
+            Point *p = malloc(sizeof(Point));
 
-            p.x = interpolate_component(vec_u, fm1->points[point_idx].x,
-                                              f->points[point_idx].x,
-                                              fa1->points[point_idx].x,
-                                              fa2->points[point_idx].x);
+            p->x = interpolate_component(vec_u, fm1->points[point_idx]->x,
+                                              f->points[point_idx]->x,
+                                              fa1->points[point_idx]->x,
+                                              fa2->points[point_idx]->x);
 
-            p.y = interpolate_component(vec_u, fm1->points[point_idx].y,
-                                              f->points[point_idx].y,
-                                              fa1->points[point_idx].y,
-                                              fa2->points[point_idx].y);
+            p->y = interpolate_component(vec_u, fm1->points[point_idx]->y,
+                                              f->points[point_idx]->y,
+                                              fa1->points[point_idx]->y,
+                                              fa2->points[point_idx]->y);
             
-            p.z = interpolate_component(vec_u, fm1->points[point_idx].z,
-                                              f->points[point_idx].z,
-                                              fa1->points[point_idx].z,
-                                              fa2->points[point_idx].z);
+            p->z = interpolate_component(vec_u, fm1->points[point_idx]->z,
+                                              f->points[point_idx]->z,
+                                              fa1->points[point_idx]->z,
+                                              fa2->points[point_idx]->z);
 
             f->points.push_back(p);
         }
@@ -246,14 +246,14 @@ void output_interpolated_frames(void)
 
         // Writes all the interpolated points
         for (int point_idx = 0; point_idx < frame->points.size(); point_idx++) {
-            Point p = frame->points[point_idx];
-            obj_file << "v " << p.x << " " << p.y << " " << p.z << endl;
+            Point *p = frame->points[point_idx];
+            obj_file << "v " << p->x << " " << p->y << " " << p->z << endl;
         }
         
         // Writes all the faces
         for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
-            Face f = faces[face_idx];
-            obj_file << "f " << f.p1 << " " << f.p2 << " " << f.p3 << endl;
+            Face *f = faces[face_idx];
+            obj_file << "f " << f->p1 << " " << f->p2 << " " << f->p3 << endl;
         }
 
         obj_file.close();
@@ -263,12 +263,27 @@ void output_interpolated_frames(void)
 
 // Frees all heap-allocated data for the program
 void destruct() {
-    for (int idx = 0; idx < keyframe_count; idx++) {
-        free(keyframes[idx]);
+    // Frees each keyframe along with all of its points
+    for (int frame_idx = 0; frame_idx < keyframe_count; frame_idx++) {
+        vector<Point *> points = keyframes[frame_idx]->points;
+        for (int point_idx = 0; point_idx < points.size(); point_idx++) {
+            free(points[point_idx]);
+        }
+        free(keyframes[frame_idx]);
     }
 
-    for (int idx = 0; idx < interpolated_frames.size(); idx++) {
-        free(interpolated_frames[idx]);
+    // Frees each interpolated frame along with all of its points
+    for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
+        vector<Point *> points = interpolated_frames[frame_idx]->points;
+        for (int point_idx = 0; point_idx < points.size(); point_idx++) {
+            free(points[point_idx]);
+        }
+        free(keyframes[frame_idx]);
+    }
+
+    // Frees every face
+    for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
+        free(faces[face_idx]);
     }
 }
 
