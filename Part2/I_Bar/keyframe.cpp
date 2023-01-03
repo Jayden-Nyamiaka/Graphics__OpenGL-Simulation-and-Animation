@@ -15,7 +15,6 @@
 
 /* Eigen Library included for ArcBall implementation */
 #include <Eigen/Dense>
-using Eigen::Vector3f;
 using Eigen::Vector4f;
 
 using namespace std;
@@ -33,15 +32,6 @@ struct Frame
     float scaling[3];
     Quarternion rotation;
 };
-
-/*Quarternion getIdentityQuarternion(void) {
-    Quarternion q;
-    q.real = 1.0f;
-    q.im[0] = 0.0f;
-    q.im[1] = 0.0f;
-    q.im[2] = 0.0f;
-    return q;
-}*/
 
 /* This is a code snippet for drawing the "I-bar". The 'quadratic' object can be made
  * into a global variable in your program if you want. Line 13, where 'quadratic' gets
@@ -264,7 +254,13 @@ void transformIBar(void)
                  currFrame.translation[1], 
                  currFrame.translation[2]);
 
-    // Then applies the rotation
+
+    // Then applies the scaling
+    glScalef(currFrame.scaling[0], 
+             currFrame.scaling[1], 
+             currFrame.scaling[2]);
+
+    // Finally applies the rotation
     Quarternion q = currFrame.rotation;
     GLfloat rot[16];
 
@@ -289,11 +285,6 @@ void transformIBar(void)
     rot[15] = 1.0f;
 
     glMultMatrixf(rot);
-
-    // Finally applies the scaling
-    glScalef(currFrame.scaling[0], 
-             currFrame.scaling[1], 
-             currFrame.scaling[2]);
 }
 
 void drawIBar(void)
