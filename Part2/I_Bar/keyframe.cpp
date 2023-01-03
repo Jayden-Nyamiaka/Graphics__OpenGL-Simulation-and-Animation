@@ -71,6 +71,9 @@ float near_param = 1.0f,
 
 /* Frame parameters */
 
+// Has the program automatically display the next frame every rate milliseconds (optionally set by user)
+int rate = 0; // in milliseconds
+
 // Parameters read in from the input .script file
 int frame_count;
 vector<Frame*> frames;
@@ -95,8 +98,9 @@ int quadSlices = 4;
 
 
 void usage(string filename) {
-    cerr << "usage: " << filename << " input_file.script xres yres\n\t"
-            "xres, yres (screen resolution) must be positive integers\n";
+    cerr << "usage: " << filename << " input_file.script xres yres [-rate]\n\t"
+            "xres, yres (screen resolution) must be positive integers\n\t"
+            "optional rate as the milliseconds between each frame must be a positive integer\n";
     exit(1);
 }
 
@@ -182,10 +186,9 @@ void parseScriptFile(string scriptfile)
 void init(int &argc, char* argv[])
 {
     /* Checks that the user inputted the right parameters into the command line
-     * and stores xres, yres, and filename to their respective fields
-     */
+     * and stores xres, yres, and filename to their respective fields */
     string filename = argv[0];
-    if (argc != 4) {
+    if (argc != 4 && argc != 5) {
         usage(filename);
     }
     string script_file = argv[1];
@@ -193,6 +196,12 @@ void init(int &argc, char* argv[])
     int yres = stoi(argv[3]);
     if (xres <= 0 || yres <= 0) {
         usage(filename);
+    }
+    if (argc == 5) {
+        rate = stoi(argv[4]);
+        if (rate <= 0 ) {
+            usage(filename);
+        }
     }
 
     // Intializes the GLUT library
@@ -208,7 +217,7 @@ void init(int &argc, char* argv[])
     glutInitWindowPosition(0, 0);
 
     // Names the program window and creates it
-    glutCreateWindow("I-bar Animation");
+    glutCreateWindow("I-Bar Animation");
 
     // Extracts all information from script file entered in command line
     parseScriptFile(script_file);
@@ -221,10 +230,6 @@ void init(int &argc, char* argv[])
     // Declares quadratic needed to draw I-bar later
     quadratic = gluNewQuadric();
 
-    // Initializes Rotation Quarternions
-    //last_rotation = getIdentityQuarternion();
-    //curr_rotation = getIdentityQuarternion();
-
     // Specifies Gouraud Shading as the shading mode
     glShadeModel(GL_SMOOTH);
     
@@ -235,72 +240,18 @@ void init(int &argc, char* argv[])
     // Uses Depth Buffering as an optimization when rendering
     glEnable(GL_DEPTH_TEST);
     
-     /* Tells OpenGL to automatically normalize our normal
-     * vectors before it passes them into the normal arrays discussed below
-     */
+    // Has OpenGL automatically normalize our normal vectors
     glEnable(GL_NORMALIZE);
     
-    /* The following two lines tell OpenGL to enable its "vertex array" and
-     * "normal array" functionality.
-     */
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_NORMAL_ARRAY);
-    
-    /* The next 4 lines work with OpenGL's two main matrices: the "Projection
-     * Matrix" and the "Modelview Matrix". Only one of these two main matrices
-     * can be modified at any given time. We specify the main matrix that we
-     * want to modify with the 'glMatrixMode' function.
-     *
-     * The Projection Matrix is the matrix that OpenGL applies to points in
-     * camera space. For our purposes, we want the Projection Matrix to be
-     * the perspective projection matrix, since we want to convert points into
-     * NDC after they are in camera space.
-     *
-     * The line of code below:
-     */
+    /* Sets up Perspective Projection Matrix with Frustum Parameters to 
+     * correctly transform points from camera space to NDC pixel space */
     glMatrixMode(GL_PROJECTION);
-    /* ^tells OpenGL that we are going to modify the Projection Matrix. From
-     * this point on, any matrix comamnds we give OpenGL will affect the
-     * Projection Matrix. For instance, the line of code below:
-     */
     glLoadIdentity();
-    /* ^tells OpenGL to set the current main matrix (which is the Projection
-     * Matrix right now) to the identity matrix. Then, the next line of code:
-     */
     glFrustum(left_param, right_param,
               bottom_param, top_param,
               near_param, far_param);
-    /* ^ tells OpenGL to create a perspective projection matrix using the
-     * given frustum parameters. OpenGL then post-multiplies the current main
-     * matrix (the Projection Matrix) with the created matrix. i.e. let 'P'
-     * be our Projection Matrix and 'F' be the matrix created by 'glFrustum'.
-     * Then, after 'F' is created, OpenGL performs the following operation:
-     *
-     * P = P * F
-     * 
-     * Since we had set the Projection Matrix to the identity matrix before the
-     * call to 'glFrustum', the above multiplication results in the Projection
-     * Matrix being the perspective projection matrix, which is what we want.
-     */
-    
-    /* The Modelview Matrix is the matrix that OpenGL applies to untransformed
-     * points in world space. OpenGL applies the Modelview Matrix to points
-     * BEFORE it applies the Projection Matrix.
-     * 
-     * Thus, for our purposes, we want the Modelview Matrix to be the overall
-     * transformation matrix that we apply to points in world space before
-     * applying the perspective projection matrix. This means we would need to
-     * factor in all the individual object transformations and the camera
-     * transformations into the Modelview Matrix.
-     *
-     * The following line of code tells OpenGL that we are going to modify the
-     * Modelview Matrix. From this point on, any matrix commands we give OpenGL
-     * will affect the Modelview Matrix.
-     *
-     * We generally modify the Modelview Matrix in the 'display' function,
-     * right before we tell OpenGL to render anything. See the 'display'
-     * for details.
-     */
+
+    // Switches to the ModelVieww Matrix for use during our display function
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -452,8 +403,8 @@ float interpolateComponent(Vector4f vec_u, float comp_m1, float comp, float comp
     Vector4f vec_p;
     vec_p << comp_m1, comp, comp_a1, comp_a2;
     
-    // returns the resulting interpolated component f(u) = u dot B * p
-    return vec_u.dot(mat_B * vec_p)
+    // Returns the resulting interpolated component f(u) = u dot B * p
+    return vec_u.dot(mat_B * vec_p);
 }
 
 
@@ -466,7 +417,7 @@ void interpolate(void)
     Frame *fa2 = frames[idx_pa2];
 
     // Calculates vector u as the input to the Catmull-Rom Spline function f(u)
-    float u = (frame_num - f->number) / (fa1->number - f->number);
+    float u = (frame_num - f->number) * 1.0 / (fa1->number - f->number);
     Vector4f vec_u;
     vec_u << 1, u, u*u, u*u*u;
 
@@ -504,7 +455,7 @@ void interpolate(void)
                                                        fa2->scaling[2]);
     
     // Rotation
-    Vector3f rotIm;
+    Vector4f rotIm;
     rotIm[0] = interpolateComponent(vec_u, fm1->rotation.im[0],
                                            f->rotation.im[0],
                                            fa1->rotation.im[0],
@@ -517,11 +468,16 @@ void interpolate(void)
                                            f->rotation.im[2],
                                            fa1->rotation.im[2],
                                            fa2->rotation.im[2]);
+    rotIm[3] = interpolateComponent(vec_u, fm1->rotation.real,
+                                           f->rotation.real,
+                                           fa1->rotation.real,
+                                           fa2->rotation.real);
     rotIm.normalize();
     currFrame.rotation.im[0] = rotIm[0];
     currFrame.rotation.im[1] = rotIm[1];
     currFrame.rotation.im[2] = rotIm[2];
-
+    currFrame.rotation.real = rotIm[3];
+    
 }
 
 
@@ -550,7 +506,7 @@ void next_frame(void)
     }
 
     // If the next frame is a keyframe, set our current frame to that keyframe
-    else if (frame_num == frames[frame_idx + 1]->number) {
+    else if (frame_num == frames[next_frame_idx(frame_idx)]->number) {
         frame_idx++;
         currFrame = *(frames[frame_idx]);
     }
@@ -567,11 +523,20 @@ void next_frame(void)
     }
 }
 
+// Displays the next frame at a set regular rate
+void auto_next_frame(int time) 
+{
+    next_frame();
+    glutPostRedisplay();
 
-// Display the next frame if any key is pressed
+    glutTimerFunc(rate, auto_next_frame, 0);
+}
+
+// Displays the next frame if any key is pressed
 void key_pressed(unsigned char key, int x, int y)
 {
     next_frame();
+    glutPostRedisplay();
 }
 
 
@@ -597,6 +562,11 @@ int main(int argc, char* argv[])
 
     // Specifies to OpenGL our function for handling key presses
     glutKeyboardFunc(key_pressed);
+
+    ///// 50 is best estimate
+    if (rate != 0) {
+        glutTimerFunc(rate, auto_next_frame, 0);
+    }
     
     // Starts out main loop the program
     glutMainLoop();
