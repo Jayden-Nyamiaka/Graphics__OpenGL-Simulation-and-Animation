@@ -17,7 +17,7 @@ using Eigen::Vector4f;
 using namespace std;
 
 // Constants based on what was given in the task
-static const keyframe_count = 5;
+static const int keyframe_count = 5;
 static const string in_directory = "keyframes/";
 static const string out_directory = "output/";
 static const string frame_name = "bunny";
@@ -28,14 +28,14 @@ struct Point
     float x;
     float y;
     float z;
-}
+};
 
 struct Face
 {
     int p1;
     int p2;
     int p3;
-}
+};
 
 struct Frame
 {
@@ -74,12 +74,13 @@ void splitBySpace(string s, vector<string> &split)
 // Reads in the keyframes 
 void read_keyframes(void) 
 {
+    // Mallocs a new frame for each key frame
     for (int idx = 0; idx < keyframe_count; idx++) {
         Frame *keyframe = (Frame*)malloc(sizeof(Frame));
         keyframe->number = stoi(keyframe_nums[idx]);
 
+        // Opens the input file for each keyframe
         string obj_file_path = in_directory + frame_name + keyframe_nums[idx] + ".obj";
-
         string buffer;
         ifstream obj_file;
         obj_file.open(obj_file_path.c_str(), ifstream::in);
@@ -87,17 +88,17 @@ void read_keyframes(void)
             throw invalid_argument("Could not read input obj file '" + obj_file_path + "'.");
         }
 
-        // These variables store intermediate input while reading in parameters
+        // Stores intermediate input while reading in parameters
         vector<string> line;
-        Frame *keyframe;
 
-        /* Reads in the frame */
-        while (getline(script, buffer)) {
+        // Reads in each frame
+        while (getline(obj_file, buffer)) {
             line.clear();
             splitBySpace(buffer, line);
 
             // Reads in vertices
             if (line[0][0] == 'v') {
+                cerr << buffer << endl;
                 Point p;
                 p.x = stof(line[1]);
                 p.y = stof(line[2]);
@@ -108,8 +109,12 @@ void read_keyframes(void)
             // Reads in faces but only on the first loop iteration
             if (line[0][0] == 'f') {
                 if (idx != 0) {
+                    cerr << buffer << "Breaking.." << endl;
+
                     break;
                 }
+
+                cerr << buffer << endl;
 
                 Face f;
                 f.p1 = stoi(line[1]);
@@ -118,12 +123,11 @@ void read_keyframes(void)
                 faces.push_back(f);
             }
         }
-        
-        // Adds the keyframe to our keyframe vector once read in
-        keyframes.push_back(keyframe);
-    }
 
-    obj_file.close();
+        // Adds the keyframe to our vector and closes the file input once the frame is read in
+        keyframes.push_back(keyframe);
+        obj_file.close();
+    }
 }
 
 
@@ -184,7 +188,7 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
                                               fa1->points[point_idx].z,
                                               fa2->points[point_idx].z);
 
-            f->push_back(p);
+            f->points.push_back(p);
         }
     }
 }

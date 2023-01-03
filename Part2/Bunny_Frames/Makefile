@@ -29,6 +29,7 @@ all: $(SOURCES)
 
 clean:
 	rm -f *.o $(EXENAME)
+	rm -r /output/
 
 .PHONY: all clean
 
