@@ -179,20 +179,20 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
         for (int point_idx = 0; point_idx < f->points.size(); point_idx++) {
             Point *p = malloc(sizeof(Point));
 
-            p->x = interpolate_component(vec_u, fm1->points[point_idx]->x,
-                                              f->points[point_idx]->x,
-                                              fa1->points[point_idx]->x,
-                                              fa2->points[point_idx]->x);
+            p->x = interpolate_component(vec_u, fm1->points->at(point_idx)->x,
+                                              f->points->at(point_idx)->x,
+                                              fa1->points->at(point_idx)->x,
+                                              fa2->points->at(point_idx)->x);
 
-            p->y = interpolate_component(vec_u, fm1->points[point_idx]->y,
-                                              f->points[point_idx]->y,
-                                              fa1->points[point_idx]->y,
-                                              fa2->points[point_idx]->y);
+            p->y = interpolate_component(vec_u, fm1->points->at(point_idx)->y,
+                                              f->points->at(point_idx)->y,
+                                              fa1->points->at(point_idx)->y,
+                                              fa2->points->at(point_idx)->y);
             
-            p->z = interpolate_component(vec_u, fm1->points[point_idx]->z,
-                                              f->points[point_idx]->z,
-                                              fa1->points[point_idx]->z,
-                                              fa2->points[point_idx]->z);
+            p->z = interpolate_component(vec_u, fm1->points->at(point_idx)->z,
+                                              f->points->at(point_idx)->z,
+                                              fa1->points->at(point_idx)->z,
+                                              fa2->points->at(point_idx)->z);
 
             f->points->push_back(p);
         }
@@ -295,7 +295,7 @@ void destruct() {
 
     // Frees every face
     for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
-        free(faces[face_idx]);
+        free(faces->at(face_idx));
     }
     free(faces);
 }
