@@ -40,7 +40,7 @@ struct Face
 struct Frame
 {
     int number;
-    vector<Point *> *points;
+    vector<Point *> points;
 };
 
 
@@ -165,7 +165,7 @@ void read_in_keyframe(int kf_idx, string obj_file_path) {
             f->p1 = stoi(line[1]);
             f->p2 = stoi(line[2]);
             f->p3 = stoi(line[3]);
-            faces->push_back(f);
+            faces.push_back(f);
         }
     }
 
@@ -339,7 +339,7 @@ void destruct() {
 int main(int argc, char* argv[])
 {
     // Code added for debugging
-    bool debug_testing = false;
+    bool debug_testing = true;
 
     if (debug_testing) {
         test();
