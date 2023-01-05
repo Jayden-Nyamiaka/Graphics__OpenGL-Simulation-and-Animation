@@ -70,9 +70,114 @@ void splitBySpace(string s, vector<string> &split)
     }
 }
 
+vector<Point *> test_help(int idx) {
+    // Opens the input file for each keyframe
+    string obj_file_path = in_directory + frame_name + keyframe_nums[idx] + ".obj";
+
+    cerr << obj_file_path << endl;
+    string buffer;
+    ifstream obj_file(obj_file_path.c_str());
+    if (obj_file.fail()) {
+        throw invalid_argument("Could not read input obj file '" + obj_file_path + "'.");
+    }
+
+    vector <Point *> points; 
+    // add points
+    {
+        Point *p = new Point;
+        p->x = 0.5f;
+        p->y = 0.567f;
+        p->z = 0.653f;
+        cerr << idx << " point vector addr: " << &points << " point addr: " << p << endl;
+
+        points.push_back(p);
+    }
+
+    obj_file.close();
+
+    return points;
+}
+
+void test() {
+    for (int idx = 0; idx < keyframe_count; idx++) {
+        // Makes keyframe
+        Frame *keyframe = (Frame*)malloc(sizeof(Frame));
+        keyframe->number = stoi(keyframe_nums[idx]);
+        vector<Point *> points = test_help(idx);
+        Point *p = new Point;
+        p->x = 0.5f;
+        p->y = 0.567f;
+        p->z = 0.65f;
+        points.push_back(p);
+        cerr << points[0]->x + points[0]->y << endl;
+        keyframe->points = points;
+        keyframes.push_back(keyframe);
+    }
+}
+
+
+void read_in_keyframe(int kf_idx, string obj_file_path) {
+    Frame *keyframe = (Frame*)malloc(sizeof(Frame));
+    keyframe->number = stoi(keyframe_nums[kf_idx]);
+
+    // Opens the input file for each keyframe
+    
+
+    cerr << obj_file_path << endl;
+
+        
+    string buffer;
+    ifstream obj_file;
+    obj_file.open(obj_file_path.c_str(), ifstream::in);
+    if (obj_file.fail()) {
+        throw invalid_argument("Could not read input obj file '" + obj_file_path + "'.");
+    }
+
+    // Stores intermediate input while reading in parameters
+    vector<string> line;
+    vector<Point *> points;
+
+    // Reads in each frame
+    while (getline(obj_file, buffer)) {
+        line.clear();
+        splitBySpace(buffer, line);
+
+        // Reads in vertices
+        if (line[0][0] == 'v') {
+            cerr << buffer << endl;
+            Point *p = (Point *)malloc(sizeof(Point));
+            p->x = 10;
+            p->y = 10;
+            p->z = 10;
+            points.push_back(p);
+        }
+
+        // Reads in faces but only on the first loop iteration
+        if (line[0][0] == 'f') {
+            if (kf_idx != 0) {
+                cerr << buffer << "Breaking.." << endl;
+
+                break;
+            }
+
+            cerr << buffer << endl;
+
+            Face *f = (Face *)malloc(sizeof(Face));
+            f->p1 = 10;
+            f->p2 = 10;
+            f->p3 = 10;
+            faces.push_back(f);
+        }
+    }
+
+    // Adds the keyframe to our vector and closes the file input once the frame is read in
+    keyframe->points = points;
+    keyframes.push_back(keyframe);
+    obj_file.close();
+}
 
 // Reads in the keyframes 
-void read_keyframes(void) 
+void read_input(void) 
 {
     // Heap allocates memory for keyframes and faces vectors
     keyframes = new vector<Frame *>;
@@ -83,55 +188,86 @@ void read_keyframes(void)
         Frame *keyframe = (Frame*)malloc(sizeof(Frame));
         keyframe->number = stoi(keyframe_nums[idx]);
         keyframe->points = new vector<Point *>;
+        vector<Point *> points = test_help(idx);
+        Point *p = new Point;
+        p->x = 0.5f;
+        p->y = 0.567f;
+        p->z = 0.65f;
+        points.push_back(p);
+        cerr << points[0]->x + points[0]->y << endl;
+        keyframe->points = points;
+        keyframes.push_back(keyframe);
+    }
+}
 
-        // Opens the input file for each keyframe
-        string obj_file_path = in_directory + frame_name + keyframe_nums[idx] + ".obj";
-        string buffer;
-        ifstream obj_file;
-        obj_file.open(obj_file_path.c_str(), ifstream::in);
-        if (obj_file.fail()) {
-            throw invalid_argument("Could not read input obj file '" + obj_file_path + "'.");
+
+void read_in_keyframe(int kf_idx, string obj_file_path) {
+    Frame *keyframe = (Frame*)malloc(sizeof(Frame));
+    keyframe->number = stoi(keyframe_nums[kf_idx]);
+
+    // Opens the input file for each keyframe
+    
+
+    cerr << obj_file_path << endl;
+
+        
+    string buffer;
+    ifstream obj_file;
+    obj_file.open(obj_file_path.c_str(), ifstream::in);
+    if (obj_file.fail()) {
+        throw invalid_argument("Could not read input obj file '" + obj_file_path + "'.");
+    }
+
+    // Stores intermediate input while reading in parameters
+    vector<string> line;
+    vector<Point *> points;
+
+    // Reads in each frame
+    while (getline(obj_file, buffer)) {
+        line.clear();
+        splitBySpace(buffer, line);
+
+        // Reads in vertices
+        if (line[0][0] == 'v') {
+            cerr << buffer << endl;
+            Point *p = (Point *)malloc(sizeof(Point));
+            p->x = 10;
+            p->y = 10;
+            p->z = 10;
+            points->push_back(p);
         }
 
-        // Stores intermediate input while reading in parameters
-        vector<string> line;
+        // Reads in faces but only on the first loop iteration
+        if (line[0][0] == 'f') {
+            if (kf_idx != 0) {
+                cerr << buffer << "Breaking.." << endl;
 
-        // Reads in each frame
-        while (getline(obj_file, buffer)) {
-            line.clear();
-            splitBySpace(buffer, line);
-
-            // Reads in vertices
-            if (line[0][0] == 'v') {
-                cerr << buffer << endl;
-                Point *p = (Point *)malloc(sizeof(Point));
-                p->x = stof(line[1]);
-                p->y = stof(line[2]);
-                p->z = stof(line[3]);
-                keyframe->points->push_back(p);
+                break;
             }
 
-            // Reads in faces but only on the first loop iteration
-            if (line[0][0] == 'f') {
-                if (idx != 0) {
-                    cerr << buffer << "Breaking.." << endl;
+            cerr << buffer << endl;
 
-                    break;
-                }
-
-                cerr << buffer << endl;
-
-                Face *f = (Face *)malloc(sizeof(Face));
-                f->p1 = stoi(line[1]);
-                f->p2 = stoi(line[2]);
-                f->p3 = stoi(line[3]);
-                faces->push_back(f);
-            }
+            Face *f = (Face *)malloc(sizeof(Face));
+            f->p1 = 10;
+            f->p2 = 10;
+            f->p3 = 10;
+            faces->push_back(f);
         }
+    }
 
-        // Adds the keyframe to our vector and closes the file input once the frame is read in
-        keyframes->push_back(keyframe);
-        obj_file.close();
+    // Adds the keyframe to our vector and closes the file input once the frame is read in
+    keyframe->points = points;
+    keyframes.push_back(keyframe);
+    obj_file.close();
+}
+
+// Reads in the keyframes 
+void read_input(void) 
+{
+    // Mallocs a new frame for each key frame
+    for (int idx = 0; idx < keyframe_count; idx++) {
+        string path = in_directory + frame_name + keyframe_nums[idx] + ".obj";
+        read_in_keyframe(idx, path);
     }
 }
 
@@ -177,7 +313,7 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
 
         // Interpolates every point for the frame
         for (int point_idx = 0; point_idx < f->points.size(); point_idx++) {
-            Point *p = malloc(sizeof(Point));
+            Point *p = (Point *)malloc(sizeof(Point));
 
             p->x = interpolate_component(vec_u, fm1->points->at(point_idx)->x,
                                               f->points->at(point_idx)->x,
@@ -308,11 +444,17 @@ int main(int argc, char* argv[])
         usage(argv[0]);
     }
 
-    read_keyframes();
+    test();
+
+    
+    if (false) {
+    read_input();
 
     interpolate_frames();
 
     output_interpolated_frames();
 
     destruct();
+
+    }
 }
