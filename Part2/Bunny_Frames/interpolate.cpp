@@ -140,7 +140,7 @@ void read_input(void)
 
 
 // Uses Catmull-Rom Spline to interpolate a component given values for p-1, p, p+1, & p+2
-float interpolate_component(Vector4f vec_u, float comp_m1, float comp, float comp_a1, float comp_a2) 
+float interpolate_component(Vector4f &vec_u, float comp_m1, float comp, float comp_a1, float comp_a2) 
 {
     // Basis Matrix used with splines to interpolate components 
     Eigen::Matrix4f mat_B;
@@ -163,41 +163,44 @@ float interpolate_component(Vector4f vec_u, float comp_m1, float comp, float com
 void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
     // Gets the keyframes for p-1, p, p+1, & p+2
     Frame *fm1 = keyframes[idx_pm1];
-    Frame *f = keyframes[idx_p];
+    Frame *fp = keyframes[idx_p];
     Frame *fa1 = keyframes[idx_pa1];
     Frame *fa2 = keyframes[idx_pa2];
 
     // Interpolates a frame for every # between the idx_p and idx_pa1 keyframes
-    for (int frame_num = f->number + 1; frame_num < fa1->number; frame_num++) {
+    for (int frame_num = fp->number + 1; frame_num < fa1->number; frame_num++) {
         Frame* f = new Frame;
         f->number = frame_num;
         
         // Calculates vector u as the input to the Catmull-Rom Spline function f(u)
-        float u = (frame_num - f->number) * 1.0 / (fa1->number - f->number);
+        float u = (frame_num - fp->number) * 1.0 / (fa1->number - fp->number);
         Vector4f vec_u;
         vec_u << 1, u, u*u, u*u*u;
 
         // Interpolates every point for the frame
-        for (int point_idx = 0; point_idx < f->points.size(); point_idx++) {
+        for (int point_idx = 0; point_idx < fp->points.size(); point_idx++) {
             Point *p = new Point;
 
             p->x = interpolate_component(vec_u, fm1->points[point_idx]->x,
-                                              f->points[point_idx]->x,
+                                              fp->points[point_idx]->x,
                                               fa1->points[point_idx]->x,
                                               fa2->points[point_idx]->x);
 
             p->y = interpolate_component(vec_u, fm1->points[point_idx]->y,
-                                              f->points[point_idx]->y,
+                                              fp->points[point_idx]->y,
                                               fa1->points[point_idx]->y,
                                               fa2->points[point_idx]->y);
             
             p->z = interpolate_component(vec_u, fm1->points[point_idx]->z,
-                                              f->points[point_idx]->z,
+                                              fp->points[point_idx]->z,
                                               fa1->points[point_idx]->z,
                                               fa2->points[point_idx]->z);
 
             f->points.push_back(p);
         }
+
+        // Adds the interpolated keyframe to our vector
+        interpolated_frames.push_back(f);
     }
 }
 
@@ -231,6 +234,7 @@ void interpolate_frames(void)
 // Output all the interpolated frames
 void output_interpolated_frames(void) 
 {
+    // Writes an obj file for each interpolated frame
     for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
         // Gets the interpolated frame for every interpolated frame
         Frame *frame = interpolated_frames[frame_idx];
@@ -271,7 +275,6 @@ void destruct() {
         delete frame;
     }
 
-
     // Frees each interpolated frame along with all of its points
     for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
         Frame *frame = interpolated_frames[frame_idx];
@@ -280,7 +283,6 @@ void destruct() {
         }
         delete frame;
     }
-
 
     // Frees every face
     for (int face_idx = 0; face_idx < faces.size(); face_idx++) {

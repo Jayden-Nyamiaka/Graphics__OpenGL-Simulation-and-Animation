@@ -24,12 +24,16 @@ LIBS = -lGLEW -lGL -lGLU -lglut -lm
 
 EXENAME = interpolate
 
-all: $(SOURCES)
+interpolate: $(SOURCES)
 	$(CC) $(FLAGS) -o $(EXENAME) $(INCLUDE) $(LIBDIR) $(SOURCES) $(LIBS)
 
+check: compareframes.py
+	python3 compareframes.py
+									
 clean:
-	rm -f *.o $(EXENAME)
-	rm -r /output/
+	rm -f *.o $(EXENAME) output/*
+
+all: clean interpolate
 
 .PHONY: all clean
 
