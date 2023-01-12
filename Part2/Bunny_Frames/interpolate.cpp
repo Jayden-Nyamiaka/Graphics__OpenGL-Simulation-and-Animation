@@ -81,7 +81,7 @@ void splitBySpace(string s, vector<string> &split)
 
 void test_help(int idx) {
     // Makes keyframe
-    Frame *keyframe = (Frame*)malloc(sizeof(Frame));
+    Frame *keyframe = new Frame;
     keyframe->number = keyframe_nums[idx];
 
     // Opens file
@@ -128,7 +128,7 @@ void test() {
 
 
 void read_in_keyframe(int kf_idx, string obj_file_path) {
-    Frame *keyframe = (Frame*)malloc(sizeof(Frame));
+    Frame *keyframe = new Frame;
     keyframe->number = keyframe_nums[kf_idx];
 
     // Opens file for reading
@@ -148,7 +148,7 @@ void read_in_keyframe(int kf_idx, string obj_file_path) {
 
         // Reads in vertices
         if (line[0][0] == 'v') {
-            Point *p = (Point *)malloc(sizeof(Point));
+            Point *p = new Point;
             p->x = stof(line[1]);
             p->y = stof(line[2]);
             p->z = stof(line[3]);
@@ -161,7 +161,7 @@ void read_in_keyframe(int kf_idx, string obj_file_path) {
                 break;
             }
 
-            Face *f = (Face *)malloc(sizeof(Face));
+            Face *f = new Face;
             f->p1 = stoi(line[1]);
             f->p2 = stoi(line[2]);
             f->p3 = stoi(line[3]);
@@ -215,7 +215,7 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
 
     // Interpolates a frame for every # between the idx_p and idx_pa1 keyframes
     for (int frame_num = f->number + 1; frame_num < fa1->number; frame_num++) {
-        Frame* f = (Frame *)malloc(sizeof(Frame));
+        Frame* f = new Frame;
         f->number = frame_num;
         
         // Calculates vector u as the input to the Catmull-Rom Spline function f(u)
@@ -225,7 +225,7 @@ void interpolate_gap(int idx_pm1, int idx_p, int idx_pa1, int idx_pa2) {
 
         // Interpolates every point for the frame
         for (int point_idx = 0; point_idx < f->points.size(); point_idx++) {
-            Point *p = (Point *)malloc(sizeof(Point));
+            Point *p = new Point;
 
             p->x = interpolate_component(vec_u, fm1->points[point_idx]->x,
                                               f->points[point_idx]->x,
@@ -312,9 +312,9 @@ void destruct() {
     for (int frame_idx = 0; frame_idx < keyframe_count; frame_idx++) {
         Frame *frame = keyframes[frame_idx];
         for (int point_idx = 0; point_idx < frame->points.size(); point_idx++) {
-            free(frame->points[point_idx]);
+            delete frame->points[point_idx];
         }
-        free(frame);
+        delete frame;
     }
 
 
@@ -322,15 +322,15 @@ void destruct() {
     for (int frame_idx = 0; frame_idx < interpolated_frames.size(); frame_idx++) {
         Frame *frame = interpolated_frames[frame_idx];
         for (int point_idx = 0; point_idx < frame->points.size(); point_idx++) {
-            free(frame->points[point_idx]);
+            delete frame->points[point_idx];
         }
-        free(frame);
+        delete frame;
     }
 
 
     // Frees every face
     for (int face_idx = 0; face_idx < faces.size(); face_idx++) {
-        free(faces[face_idx]);
+        delete faces[face_idx];
     }
 }
 
