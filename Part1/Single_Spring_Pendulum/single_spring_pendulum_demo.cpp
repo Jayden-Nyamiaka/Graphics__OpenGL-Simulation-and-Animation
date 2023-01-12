@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 5)
     {
-        cerr << "\nERROR: Incorrect number of arguments." << endl;
+        cerr << "usage: ./single_pendulum [xres] [yres] [x_start] [y_start]" << endl;
         exit(1);
     }
     

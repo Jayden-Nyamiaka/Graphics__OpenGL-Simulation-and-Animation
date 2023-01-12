@@ -332,7 +332,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 7)
     {
-        cerr << "\nERROR: Incorrect number of arguments." << endl;
+        cerr << "usage: ./double_pendulum [xres] [yres] [x_start_1] [y_start_1] [x_start_2] [y_start_2]" << endl;
         exit(1);
     }
     

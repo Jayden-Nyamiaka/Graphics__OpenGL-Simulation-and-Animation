@@ -420,6 +420,12 @@ void mouseMoved(int x, int y)
 
 int main(int argc, char* argv[])
 {
+    if(argc != 2)
+    {
+        cerr << "usage: ./simulate [object_file.obj]" << endl;
+        exit(1);
+    }
+
     std::cout << "Parsing in obj file: " << argv[1] << "\n";
     bool success = parse_OBJ(argv[1]);
     
