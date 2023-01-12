@@ -79,54 +79,8 @@ void splitBySpace(string s, vector<string> &split)
     }
 }
 
-void test_help(int idx) {
-    // Makes keyframe
-    Frame *keyframe = new Frame;
-    keyframe->number = keyframe_nums[idx];
 
-    // Opens file
-    /* WHEN I REMOVE OPENING AND CLOSING THE FILE, THERE'S NO ERROR, 
-     * BUT ONCE I ADD IN THE FILE, IT ERRORS ON THE SECOND ITERATION, 
-     * WHICH DOESNT MAKE SENSE TO ME BECAUSE I DONT EVEN READ ANYTHING 
-     * FROM THE FILE
-     */
-    string path = in_directory + frame_name + intTo2DigitString(keyframe_nums[idx]) + ".obj";
-    ifstream obj_file(path.c_str());
-    if (obj_file.fail()) {
-        throw invalid_argument("Could not read input obj file '" + path + "'.");
-    }
- 
-    // adds a singular point that isn't even read in from the file
-    {
-        Point *p = new Point;
-        p->x = 10;
-        p->y = 20;
-        p->z = 30;
-        cerr << idx << " keyframe addr: " << keyframe 
-                << " point vector addr: " << &(keyframe->points) 
-                << " point addr: " << p << endl;
-
-        /* STILL ERRORS RIGHT HERE ON THE SECOND ITERATION.
-         * FOR SOME REASON THE FIRST ITERATION READS IN THE POINT FINE 
-         * BOTH OPENING AND CLOSING THE FILE, BUT ONCE IT GETS TO THE SECOND
-         * ITERATION IT ERRORS ON THIS LINE
-         */
-        keyframe->points.push_back(p);
-    }
-
-    // Doesnt even add the keyframe to our vector 
-
-    // Closes file
-    obj_file.close();
-}
-void test() {
-    for (int idx = 0; idx < keyframe_count; idx++) {
-        test_help(idx);
-    }
-}
-
-
-
+// Reads in a single keyframe
 void read_in_keyframe(int kf_idx, string obj_file_path) {
     Frame *keyframe = new Frame;
     keyframe->number = keyframe_nums[kf_idx];
@@ -338,14 +292,6 @@ void destruct() {
 /* Comments for the individual functions of main are above */
 int main(int argc, char* argv[])
 {
-    // Code added for debugging
-    bool debug_testing = true;
-
-    if (debug_testing) {
-        test();
-    } else {
-
-    // Main program
     if (argc != 1) {
         usage(argv[0]);
     }
@@ -357,6 +303,4 @@ int main(int argc, char* argv[])
     output_interpolated_frames();
 
     destruct();
-
-    }
 }
