@@ -116,6 +116,13 @@ float deg2rad(float angle)
 }
 
 
+// Converts a given angle in radians to degrees
+float rad2deg(float angle)
+{
+    return angle * 180.0 / M_PI;
+}
+
+
 void parseScriptFile(string scriptfile)
 {
     // Ensures the input script is the 
@@ -250,52 +257,14 @@ void init(int &argc, char* argv[])
 void transformIBar(void)
 {
     // Applies the translation first
-    GLfloat trans[16];
-    // 1, 0, 0, tx
-    trans[0] = 1.0f;
-    trans[1] = 0.0f;
-    trans[2] = 0.0f;
-    trans[3] = currFrame.translation[0];
-    // 0, 1, 0, ty
-    trans[4] = 0.0f;
-    trans[5] = 1.0f;
-    trans[6] = 0.0f;
-    trans[7] = currFrame.translation[1];
-    // 0, 0, 1, tz
-    trans[8] = 0.0f;
-    trans[9] = 0.0f;
-    trans[10] = 1.0f;
-    trans[11] = currFrame.translation[2];
-    // 0, 0, 0, 1
-    trans[12] = 0.0f;
-    trans[13] = 0.0f;
-    trans[14] = 0.0f;
-    trans[15] = 1.0f;
-    glMultMatrixf(trans);
+    glTranslatef(currFrame.translation[0],
+                 currFrame.translation[1],
+                 currFrame.translation[2]);
 
     // Then applies the scaling
-    GLfloat scale[16];
-    // sx, 0, 0, 0
-    scale[0] = currFrame.scaling[0];
-    scale[1] = 0.0f;
-    scale[2] = 0.0f;
-    scale[3] = 0.0f;
-    // 0, sy, 0, 0
-    scale[4] = 0.0f;
-    scale[5] = currFrame.scaling[1];;
-    scale[6] = 0.0f;
-    scale[7] = 0.0f;
-    // 0, 0, sz, 0
-    scale[8] = 0.0f;
-    scale[9] = 0.0f;
-    scale[10] = currFrame.scaling[2];
-    scale[11] = 0.0f
-    // 0, 0, 0, 1
-    scale[12] = 0.0f;
-    scale[13] = 0.0f;
-    scale[14] = 0.0f;
-    scale[15] = 1.0f;
-    glMultMatrixf(scale);
+    glScalef(currFrame.scaling[0],
+             currFrame.scaling[1],
+             currFrame.scaling[2]);
 
     // Finally applies the rotation
     Quarternion q = currFrame.rotation;
