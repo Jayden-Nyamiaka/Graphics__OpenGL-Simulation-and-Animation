@@ -546,7 +546,7 @@ int main(int argc, char* argv[])
     // Specifies to OpenGL our function for handling key presses
     glutKeyboardFunc(key_pressed);
 
-    // Note: rate = 40 to 50 yields a pretty good animation frame rate
+    // Note: rate = 40 to 100 yields a pretty good animation frame rate
     if (rate != 0) {
         glutTimerFunc(rate, auto_next_frame, 0);
     }

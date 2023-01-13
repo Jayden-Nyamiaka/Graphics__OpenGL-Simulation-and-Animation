@@ -21,7 +21,7 @@ I_Bar
     2) Run ./keyframe [input_file.script] [xres] [yres] [-rate] to generate the animation.
           - I added an optional rate argument which when entered as the 5th command line argument will step through the frames of the program automatically where rate is the number the milliseconds between each frame.
             - I implemented it by researching and employing glutTimerFunc with glutPostRedisplay.
-            - Note: A rate of around 40 to 50 yields pretty good animations.
+            - Note: A rate of around 40 to 100 yields pretty good animations.
           - You can press any key on the keyboard to move the animation forward by one frame.
             - Note: This is still enabled when the rate argument is set.
 
