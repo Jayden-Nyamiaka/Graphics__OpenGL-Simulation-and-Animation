@@ -274,31 +274,6 @@ void transformIBar(void)
     float rot_z = q.im[2] / intermediate;
     float angle = 2.0 * rad2deg(acos(q.real)); // in degrees
     glRotatef(angle, rot_x, rot_y, rot_z);
-
-/*
-    GLfloat rot[16];
-    // rot row 1
-    rot[0] = 1.0f - 2.0f * q.im[1] * q.im[1] - 2.0f * q.im[2] * q.im[2];
-    rot[1] = 2.0f * (q.im[0] * q.im[1] - q.im[2] * q.real);
-    rot[2] = 2.0f * (q.im[0] * q.im[2] + q.im[1] * q.real);
-    rot[3] = 0.0f;
-    // rot row 2
-    rot[4] = 2.0f * (q.im[0] * q.im[1] + q.im[2] * q.real);
-    rot[5] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[2] * q.im[2];
-    rot[6] = 2.0f * (q.im[1] * q.im[2] - q.im[0] * q.real);
-    rot[7] = 0.0f;
-    // rot row 3
-    rot[8] = 2.0f * (q.im[0] * q.im[2] - q.im[1] * q.real);
-    rot[9] = 2.0f * (q.im[1] * q.im[2] + q.im[0] * q.real);
-    rot[10] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[1] * q.im[1];
-    rot[11] = 0.0f;
-    // rot row 4
-    rot[12] = 0.0f;
-    rot[13] = 0.0f;
-    rot[14] = 0.0f;
-    rot[15] = 1.0f;
-    glMultMatrixf(rot);
-*/
 }
 
 
