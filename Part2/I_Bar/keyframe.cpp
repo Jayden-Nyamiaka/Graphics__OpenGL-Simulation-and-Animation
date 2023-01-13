@@ -267,7 +267,15 @@ void transformIBar(void)
              currFrame.scaling[2]);
 
     // Finally applies the rotation
-    Quarternion q = currFrame.rotation;
+    Quarternion &q = currFrame.rotation;
+    float intermediate = sqrt(1.0 - q.real*q.real);
+    float rot_x = q.im[0] / intermediate;
+    float rot_y = q.im[1] / intermediate;
+    float rot_z = q.im[2] / intermediate;
+    float angle = 2.0 * rad2deg(acos(q.real)); // in degrees
+    glRotatef(angle, rot_x, rot_y, rot_z);
+
+/*
     GLfloat rot[16];
     // rot row 1
     rot[0] = 1.0f - 2.0f * q.im[1] * q.im[1] - 2.0f * q.im[2] * q.im[2];
@@ -290,6 +298,7 @@ void transformIBar(void)
     rot[14] = 0.0f;
     rot[15] = 1.0f;
     glMultMatrixf(rot);
+*/
 }
 
 
