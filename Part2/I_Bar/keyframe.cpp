@@ -250,40 +250,76 @@ void init(int &argc, char* argv[])
 void transformIBar(void)
 {
     // Applies the translation first
-    glTranslatef(currFrame.translation[0], 
-                 currFrame.translation[1], 
-                 currFrame.translation[2]);
-
+    GLfloat trans[16];
+    // 1, 0, 0, tx
+    trans[0] = 1.0f;
+    trans[1] = 0.0f;
+    trans[2] = 0.0f;
+    trans[3] = currFrame.translation[0];
+    // 0, 1, 0, ty
+    trans[4] = 0.0f;
+    trans[5] = 1.0f;
+    trans[6] = 0.0f;
+    trans[7] = currFrame.translation[1];
+    // 0, 0, 1, tz
+    trans[8] = 0.0f;
+    trans[9] = 0.0f;
+    trans[10] = 1.0f;
+    trans[11] = currFrame.translation[2];
+    // 0, 0, 0, 1
+    trans[12] = 0.0f;
+    trans[13] = 0.0f;
+    trans[14] = 0.0f;
+    trans[15] = 1.0f;
+    glMultMatrixf(trans);
 
     // Then applies the scaling
-    glScalef(currFrame.scaling[0], 
-             currFrame.scaling[1], 
-             currFrame.scaling[2]);
+    GLfloat scale[16];
+    // sx, 0, 0, 0
+    scale[0] = currFrame.scaling[0];
+    scale[1] = 0.0f;
+    scale[2] = 0.0f;
+    scale[3] = 0.0f;
+    // 0, sy, 0, 0
+    scale[4] = 0.0f;
+    scale[5] = currFrame.scaling[1];;
+    scale[6] = 0.0f;
+    scale[7] = 0.0f;
+    // 0, 0, sz, 0
+    scale[8] = 0.0f;
+    scale[9] = 0.0f;
+    scale[10] = currFrame.scaling[2];
+    scale[11] = 0.0f
+    // 0, 0, 0, 1
+    scale[12] = 0.0f;
+    scale[13] = 0.0f;
+    scale[14] = 0.0f;
+    scale[15] = 1.0f;
+    glMultMatrixf(scale);
 
     // Finally applies the rotation
     Quarternion q = currFrame.rotation;
     GLfloat rot[16];
-
+    // rot row 1
     rot[0] = 1.0f - 2.0f * q.im[1] * q.im[1] - 2.0f * q.im[2] * q.im[2];
     rot[1] = 2.0f * (q.im[0] * q.im[1] - q.im[2] * q.real);
     rot[2] = 2.0f * (q.im[0] * q.im[2] + q.im[1] * q.real);
     rot[3] = 0.0f;
-
+    // rot row 2
     rot[4] = 2.0f * (q.im[0] * q.im[1] + q.im[2] * q.real);
     rot[5] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[2] * q.im[2];
     rot[6] = 2.0f * (q.im[1] * q.im[2] - q.im[0] * q.real);
     rot[7] = 0.0f;
-
+    // rot row 3
     rot[8] = 2.0f * (q.im[0] * q.im[2] - q.im[1] * q.real);
     rot[9] = 2.0f * (q.im[1] * q.im[2] + q.im[0] * q.real);
     rot[10] = 1.0f - 2.0f * q.im[0] * q.im[0] - 2.0f * q.im[1] * q.im[1];
     rot[11] = 0.0f;
-    
+    // rot row 4
     rot[12] = 0.0f;
     rot[13] = 0.0f;
     rot[14] = 0.0f;
     rot[15] = 1.0f;
-
     glMultMatrixf(rot);
 }
 
