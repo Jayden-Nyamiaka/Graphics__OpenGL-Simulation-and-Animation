@@ -5,9 +5,9 @@ Compile and Execute Instructions:
     1) The executables can be generated using "make all" for all 3 demos.
 
     2) To run each of the demo simulations, their usages are as follows:
-          - Single Spring Pendulum Demo: ./single_pendulum [xres] [yres] [x_start] [y_start]
-          - Double Spring Pendulum Demo: ./double_pendulum [xres] [yres] [x_start_1] [y_start_1] [x_start_2] [y_start_2]
-          - Elasticity Demo: ./simulate [object_file.obj]
+          - Single_Spring_Pendulum: ./single_pendulum [xres] [yres] [x_start] [y_start]
+          - Double_Spring_Pendulum: ./double_pendulum [xres] [yres] [x_start_1] [y_start_1] [x_start_2] [y_start_2]
+          - Elasticity: ./simulate [object_file.obj]
 
     3) Run "make clean" to delete any generated files.
 
@@ -26,6 +26,14 @@ I_Bar
             - Note: This is still enabled when the rate argument is set.
 
     3) Run "make clean" to delete any generated files.
+
+  DISPLAY BUG:
+    The movement of the I-Bar seems to be distorted. It follows the correct path of movement, but its orientation 
+    at certain frames is off, and for a few frames, the I-Bar just vanishes. I believe the issue is with how I am implementing
+    rotations with Quarternions. I have went over the code, quadruple checking everywhere I use any Quarternion making sure I
+    have the right computation and normalize in the right places. I have even tried going back and forth between applying the
+    transformations with Matrices instead of the gl Transform functions (ie. glMultMatrixf instead of glTranslatef, glRotationf,
+    glScalef). Nothing seems to correct the orientation issue despite my hours of debugging.
 
 Bunny_Frames
   Compile and Execute Instructions:
