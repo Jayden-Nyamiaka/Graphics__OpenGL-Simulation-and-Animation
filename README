@@ -1,0 +1,42 @@
+PART 1
+
+All 3 Demo Simulation Programs have similar instructions, so I'll describe them simultaneously.
+Compile and Execute Instructions:
+    1) The executables can be generated using "make all" for all 3 demos.
+
+    2) To run each of the demo simulations, their usages are as follows:
+          - Single Spring Pendulum Demo: ./single_pendulum [xres] [yres] [x_start] [y_start]
+          - Double Spring Pendulum Demo: ./double_pendulum [xres] [yres] [x_start_1] [y_start_1] [x_start_2] [y_start_2]
+          - Elasticity Demo: ./simulate [object_file.obj]
+
+    3) Run "make clean" to delete any generated files.
+
+
+PART 2
+
+I_Bar
+  Compile and Execute Instructions:
+    1) The code be compiled into an executable using "make all".
+
+    2) Run ./keyframe [input_file.script] [xres] [yres] [-rate] to generate the animation.
+          - I added an optional rate argument which when entered as the 5th command line argument will step through the frames of the program automatically where rate is the number the milliseconds between each frame.
+            - I implemented it by researching and employing glutTimerFunc with glutPostRedisplay.
+            - Note: A rate of around 40 to 50 yields pretty good animations.
+          - You can press any key on the keyboard to move the animation forward by one frame.
+            - Note: This is still enabled when the rate argument is set.
+
+    3) Run "make clean" to delete any generated files.
+
+Bunny_Frames
+  Compile and Execute Instructions:
+    1) The code can be compiled using "make all", which also cleans before compiling.
+
+    2) Run ./interpolate to generate the 16 interpolated frames under the ouput/ folder.
+          - The generated frames have identical names to the correct reference frames under the interpolated_frames/ folder.
+
+    3) "make check" can be run to see the slight differences between the generated and reference interpolated frames.
+          - It runs compareframes.py, a snippet of python3 code I wrote to check the accuracy of my output.
+          - The only differences derive from decimal precision: my generated frames are more accurate and sometimes tack on a few more decimal places whereas the reference frames always cut the figure off after 6 decimal places.
+
+
+No extra credit was completed for this project (unless the frame rate addition counts as a little bit of extra credit).
