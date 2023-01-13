@@ -88,7 +88,7 @@ int quadSlices = 4;
 
 
 void usage(string filename) {
-    cerr << "usage: " << filename << " input_file.script xres yres [-rate]\n\t"
+    cerr << "usage: " << filename << " [input_file.script] [xres] [yres] [-rate]\n\t"
             "xres, yres (screen resolution) must be positive integers\n\t"
             "optional rate as the milliseconds between each frame must be a positive integer\n";
     exit(1);
@@ -286,6 +286,7 @@ void transformIBar(void)
 
     glMultMatrixf(rot);
 }
+
 
 void drawIBar(void)
 {   
@@ -514,6 +515,7 @@ void next_frame(void)
     }
 }
 
+
 // Displays the next frame at a set regular rate
 void auto_next_frame(int time) 
 {
@@ -522,6 +524,7 @@ void auto_next_frame(int time)
 
     glutTimerFunc(rate, auto_next_frame, 0);
 }
+
 
 // Displays the next frame if any key is pressed
 void key_pressed(unsigned char key, int x, int y)
@@ -554,7 +557,7 @@ int main(int argc, char* argv[])
     // Specifies to OpenGL our function for handling key presses
     glutKeyboardFunc(key_pressed);
 
-    ///// 50 is best estimate
+    // Note: rate = 40 to 50 yields a pretty good animation frame rate
     if (rate != 0) {
         glutTimerFunc(rate, auto_next_frame, 0);
     }
